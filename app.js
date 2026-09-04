@@ -1,4 +1,4 @@
-const APP_VERSION="4.1.0";
+const APP_VERSION="4.2.0";
 
 const $ = s => document.querySelector(s);
 const app = document.getElementById('app');
@@ -158,7 +158,7 @@ const schemes = [
 let state = JSON.parse(localStorage.getItem("kipState")||'{"xp":0,"lessons":0,"tasks":0,"level":1}');
 function save(){ state.level=1+Math.floor(state.xp/100); localStorage.setItem("kipState",JSON.stringify(state)); }
 function shell(title,body,back=true){
- app.innerHTML=`<div class="shell"><div class="topbar">${back?'<button class="btn back" onclick="home()">←</button>':''}<div><div class="title">${title}</div></div></div>${body}</div>`;
+ app.innerHTML=`<div class="shell page-enter"><div class="topbar">${back?'<button class="btn back" onclick="home()">←</button>':''}<div><div class="title">${title}</div></div></div>${body}</div>`;
 }
 function home(){
  const pct=Math.min(100,state.xp%100);
@@ -298,7 +298,12 @@ let proc={level:50,pump:false,valve:false,temp:25,pressure:2.0,timer:null};
 function processPage(){
  shell("Технологический объект",`
  <div class="process-scene">
-  <div class="tank"><div id="liquid" class="liquid" style="height:${proc.level}%"></div><span id="levelText">${proc.level.toFixed(0)}%</span></div>
+  <div class="process-rig">
+  <div class="pump-visual ${proc.pump?"running":""}"><div class="pump-rotor">✦</div><small>P-101</small></div>
+  <div class="pipe ${proc.pump?"flowing":""}"></div>
+  <div class="tank"><div id="liquid" class="liquid" style="height:${proc.level}%"><div class="wave"></div></div><span id="levelText">${proc.level.toFixed(0)}%</span></div>
+  <div class="valve-visual ${proc.valve?"open":""}">◇<small>XV-101</small></div>
+ </div>
   <div class="process-controls">
    <button class="btn" onclick="procPump()">Насос: <b id="pumpText">${proc.pump?"ВКЛ":"ВЫКЛ"}</b></button>
    <button class="btn" onclick="procValve()">Клапан: <b id="valveText">${proc.valve?"ОТКР":"ЗАКР"}</b></button>
@@ -383,6 +388,17 @@ let sb={
   power:false, wireColor:"#facc15", mode:"novice", probeA:null, probeB:null, view:{x:0,y:0,scale:1},
   history:[], future:[]
 };
+
+let sandboxAnimationFrame=null;
+function startSandboxAnimations(){
+ if(sandboxAnimationFrame)cancelAnimationFrame(sandboxAnimationFrame);
+ const loop=()=>{
+   if($("#canvas")&&sb.power)redraw();
+   sandboxAnimationFrame=requestAnimationFrame(loop);
+ };
+ loop();
+}
+
 function sandboxPage(){
  shell("Песочница",`
  <div class="sandbox-head">
@@ -428,7 +444,7 @@ function sandboxPage(){
  </div>
  <div class="status" id="sbStatus">Цепь обесточена. Добавляй элементы и соединяй их по клеммам.</div>
  <div id="probeReadout" class="probe-readout">Мультиметр: щупы не установлены</div>`);
- fitCanvas(); redraw(); renderDevicePicker(""); updatePowerUI(); installWorldPanZoom(); applyWorldView();
+ fitCanvas(); redraw(); renderDevicePicker(""); updatePowerUI(); installWorldPanZoom(); applyWorldView(); startSandboxAnimations();
 }
 
 const deviceCategoryMap = {
@@ -469,7 +485,7 @@ function restoreSandbox(snap){
 function undoSandbox(){if(sb.history.length<2)return status("Нечего отменять."); const cur=sb.history.pop(); sb.future.push(cur); restoreSandbox(sb.history[sb.history.length-1]);}
 function redoSandbox(){if(!sb.future.length)return status("Нечего повторять."); const n=sb.future.pop(); sb.history.push(n); restoreSandbox(n);}
 function togglePower(){
- sb.power=!sb.power; updatePowerUI(); snapshotSandbox(); simulate(false);
+ sb.power=!sb.power; updatePowerUI(); snapshotSandbox(); simulate(false); applyVisualState(); beep(sb.power?720:260,.06); vibrate(18);
  status(sb.power?"⚡ Питание цепи включено.":"⏻ Цепь обесточена.");
 }
 function updatePowerUI(){
@@ -497,6 +513,45 @@ function loadSavedScheme(){
  shell("Мои схемы",saves.map((s,i)=>`<div class="card"><h3>${s.name}</h3><div class="muted small">${new Date(s.date).toLocaleString()}</div><button class="btn primary wide" onclick="openSavedScheme(${i})">Открыть</button><button class="btn bad wide" onclick="deleteSavedScheme(${i})">Удалить</button></div>`).join(""));
 }
 
+
+function defaultComponentSettings(type){
+ const map={
+  source24:{voltage:24,lo:0,hi:24,value:24,signal:null},
+  battery:{voltage:12,lo:0,hi:12,value:12,signal:null},
+  resistor:{resistance:250,lo:1,hi:10000,value:250,signal:null},
+  lamp:{ratedVoltage:24,value:24,signal:null},
+  buzzer:{ratedVoltage:24,value:24,signal:null},
+  motor:{ratedVoltage:24,powerW:120,speedRpm:1450,value:1450,signal:null},
+  relay:{coilVoltage:24,value:24,signal:null},
+  contactor:{coilVoltage:24,value:24,signal:null},
+  fuse:{ratedCurrent:2,value:2,signal:null},
+  breaker:{ratedCurrent:6,value:6,signal:null},
+  thermal:{ratedCurrent:3,value:3,signal:null},
+  sensor420:{lo:0,hi:100,value:50,unit:"%",signal:12},
+  pressure:{lo:0,hi:10,value:5,unit:"bar",signal:12},
+  temp:{lo:0,hi:200,value:100,unit:"°C",signal:12},
+  level:{lo:0,hi:5,value:2.5,unit:"m",signal:12},
+  flow:{lo:0,hi:100,value:50,unit:"m³/h",signal:12},
+  sensor010:{lo:0,hi:100,value:50,unit:"%",voltageOut:5,signal:null},
+  solenoid:{coilVoltage:24,position:0,value:0,signal:null},
+  ai:{range:"4-20mA",value:12,signal:null},
+  ao:{range:"4-20mA",value:12,signal:null},
+  meter:{range:"0-60V",value:0,signal:null},
+  ammeter:{range:"0-10A",value:0,signal:null}
+ };
+ return structuredClone ? structuredClone(map[type]||{lo:0,hi:100,value:50,signal:null}) : JSON.parse(JSON.stringify(map[type]||{lo:0,hi:100,value:50,signal:null}));
+}
+function recalcComponentSignal(n){
+ if(["sensor420","pressure","temp","level","flow"].includes(n.type)){
+   const span=(n.hi-n.lo)||1;
+   n.signal=4+16*Math.max(0,Math.min(1,(n.value-n.lo)/span));
+ }
+ if(n.type==="sensor010"){
+   const span=(n.hi-n.lo)||1;
+   n.voltageOut=10*Math.max(0,Math.min(1,(n.value-n.lo)/span));
+ }
+}
+
 function terminalList(type){
  const map={
   source24:["+", "0V"], ground:["0V"], battery:["+","−"], switch:["1","2"], switchNC:["1","2"], estop:["11","12"],
@@ -511,21 +566,45 @@ function terminalList(type){
 }
 function openSelectedSettings(){
  const n=sb.nodes.find(x=>x.id===sb.selected); if(!n)return status("Сначала выбери прибор.");
- if(["sensor420","pressure","temp","level","flow"].includes(n.type)){
-   const lo=prompt("Нижний предел шкалы:", n.lo??0); if(lo===null)return;
-   const hi=prompt("Верхний предел шкалы:", n.hi??100); if(hi===null)return;
-   const val=prompt("Текущее значение процесса:", n.value??((+lo + +hi)/2)); if(val===null)return;
-   n.lo=+lo; n.hi=+hi; n.value=+val;
-   n.signal=4+16*((n.value-n.lo)/(n.hi-n.lo));
-   showDeviceInfo(n.type,n); snapshotSandbox(); status(`Датчик настроен: ${n.value} → ${n.signal.toFixed(2)} мА`);
+ const ask=(label,current)=>{const v=prompt(label,String(current));return v===null?null:+v};
+
+ if(["sensor420","pressure","temp","level","flow","sensor010"].includes(n.type)){
+   const lo=ask("Нижний предел шкалы:",n.lo??0);if(lo===null)return;
+   const hi=ask("Верхний предел шкалы:",n.hi??100);if(hi===null)return;
+   const val=ask("Текущее значение процесса:",n.value??((lo+hi)/2));if(val===null)return;
+   n.lo=lo;n.hi=hi;n.value=Math.max(Math.min(val,Math.max(lo,hi)),Math.min(lo,hi));
+   recalcComponentSignal(n);
+   showDeviceInfo(n.type,n);snapshotSandbox();animateValueChange(n);
+   status(n.type==="sensor010"?`Сигнал: ${n.voltageOut.toFixed(2)} В`:`Сигнал: ${n.signal.toFixed(2)} мА`);
    return;
  }
- if(n.type==="sensor010"){
-   const val=prompt("Выход, В (0–10):",n.value??5); if(val===null)return;
-   n.value=Math.max(0,Math.min(10,+val)); showDeviceInfo(n.type,n); snapshotSandbox(); status(`Сигнал: ${n.value.toFixed(2)} В`);
-   return;
+
+ if(n.type==="resistor"){
+   const v=ask("Сопротивление, Ω:",n.resistance??250);if(v===null)return;
+   n.resistance=Math.max(.1,v);n.value=n.resistance;snapshotSandbox();showDeviceInfo(n.type,n);animateValueChange(n);status(`R = ${n.resistance} Ω`);return;
  }
- status("У этого прибора пока нет дополнительных настроек.");
+ if(["source24","battery"].includes(n.type)){
+   const v=ask("Напряжение источника, В:",n.voltage??24);if(v===null)return;
+   n.voltage=Math.max(0,v);n.value=n.voltage;snapshotSandbox();showDeviceInfo(n.type,n);animateValueChange(n);status(`Источник: ${n.voltage.toFixed(1)} В`);return;
+ }
+ if(["relay","contactor","solenoid"].includes(n.type)){
+   const v=ask("Номинал катушки, В:",n.coilVoltage??24);if(v===null)return;
+   n.coilVoltage=Math.max(1,v);n.value=n.coilVoltage;snapshotSandbox();showDeviceInfo(n.type,n);animateValueChange(n);status(`Катушка: ${n.coilVoltage.toFixed(1)} В`);return;
+ }
+ if(["fuse","breaker","thermal"].includes(n.type)){
+   const v=ask("Номинальный ток, А:",n.ratedCurrent??2);if(v===null)return;
+   n.ratedCurrent=Math.max(.01,v);n.value=n.ratedCurrent;snapshotSandbox();showDeviceInfo(n.type,n);animateValueChange(n);status(`Номинал: ${n.ratedCurrent.toFixed(2)} А`);return;
+ }
+ if(n.type==="motor"){
+   const p=ask("Мощность двигателя, Вт:",n.powerW??120);if(p===null)return;
+   const rpm=ask("Скорость, об/мин:",n.speedRpm??1450);if(rpm===null)return;
+   n.powerW=Math.max(1,p);n.speedRpm=Math.max(0,rpm);n.value=n.speedRpm;snapshotSandbox();showDeviceInfo(n.type,n);animateValueChange(n);status(`${n.powerW} Вт • ${n.speedRpm} об/мин`);return;
+ }
+ if(["ai","ao"].includes(n.type)){
+   const raw=prompt("Диапазон канала: 4-20mA или 0-10V",n.range||"4-20mA");if(raw===null)return;
+   n.range=raw;snapshotSandbox();showDeviceInfo(n.type,n);animateValueChange(n);status(`Диапазон: ${n.range}`);return;
+ }
+ status("Для этого элемента пока нет изменяемых параметров.");
 }
 
 function beep(freq=500,dur=.05){
@@ -613,7 +692,8 @@ function fitCanvas(){const c=$("#canvas"),s=$("#sandbox"); if(!c||!s)return; c.w
 function cat(id){return componentCatalog.find(x=>x[0]===id)}
 function addComp(type,x=null,y=null){
  const s=$("#sandbox"); if(!s)return;
- const n={id:sb.nextId++,type,x:x??(20+Math.random()*(s.clientWidth-160)),y:y??(50+Math.random()*(s.clientHeight-120)),scale:1,on:false,terminals:terminalList(type),lo:0,hi:100,value:50,signal:type==="sensor420"?12:null}; snapshotSandbox();
+ const defaults=defaultComponentSettings(type);
+ const n={id:sb.nextId++,type,x:x??(20+Math.random()*(s.clientWidth-160)),y:y??(50+Math.random()*(s.clientHeight-120)),scale:1,on:false,terminals:terminalList(type),...defaults}; snapshotSandbox();
  sb.nodes.push(n); renderNode(n); redraw();
 }
 function renderNode(n){
@@ -683,6 +763,11 @@ function showDeviceInfo(type,node=null){
    <div class="device-info-row"><span>Характеристика</span><b>${i.spec}</b></div>
    <div class="device-info-row"><span>Выводы</span><b>${i.io}</b></div>
    ${node&&node.signal!=null?`<div class="device-info-row"><span>Сигнал</span><b>${node.signal.toFixed(2)} mA</b></div>`:""}
+ ${node&&node.voltageOut!=null?`<div class="device-info-row"><span>Выход</span><b>${node.voltageOut.toFixed(2)} V</b></div>`:""}
+ ${node&&node.voltage!=null?`<div class="device-info-row"><span>Напряжение</span><b>${node.voltage.toFixed(1)} V</b></div>`:""}
+ ${node&&node.resistance!=null?`<div class="device-info-row"><span>Сопротивление</span><b>${node.resistance} Ω</b></div>`:""}
+ ${node&&node.ratedCurrent!=null?`<div class="device-info-row"><span>Номинал</span><b>${node.ratedCurrent} A</b></div>`:""}
+ ${node&&node.speedRpm!=null?`<div class="device-info-row"><span>Скорость</span><b>${node.speedRpm} rpm</b></div>`:""}
    ${node?`<div class="device-info-row"><span>Состояние</span><b>${node.on?"ВКЛ":"ВЫКЛ"}</b></div>`:""}
    <div class="device-info-text">${i.desc}</div>
    <div class="device-info-tip">💡 ${i.tip}</div>`;
@@ -719,11 +804,17 @@ function wireMode(){
  sb.wires.push({a:sb.pending,b:sb.selected,color:sb.wireColor,ta:null,tb:null});sb.pending=null;snapshotSandbox();status("Провод добавлен.");redraw();
 }
 function redraw(){
- const c=$("#canvas"); if(!c)return; const ctx=c.getContext("2d"); const d=devicePixelRatio;ctx.clearRect(0,0,c.width,c.height);ctx.lineWidth=5*d;
- sb.wires.forEach(w=>{const a=w.a??w[0],b=w.b??w[1];let A=sb.nodes.find(n=>n.id===a),B=sb.nodes.find(n=>n.id===b);if(!A||!B)return;
-  ctx.strokeStyle=w.color||"#facc15";ctx.beginPath();ctx.moveTo((A.x+60)*d,(A.y+32)*d);ctx.lineTo((B.x+60)*d,(B.y+32)*d);ctx.stroke();
+ const c=$("#canvas"); if(!c)return; const ctx=c.getContext("2d"); const d=devicePixelRatio;
+ ctx.clearRect(0,0,c.width,c.height);ctx.lineWidth=5*d;ctx.lineCap="round";
+ const t=(performance.now()/60)%100;
+ sb.wires.forEach(w=>{
+   const a=w.a??w[0],b=w.b??w[1];let A=sb.nodes.find(n=>n.id===a),B=sb.nodes.find(n=>n.id===b);if(!A||!B)return;
+   ctx.strokeStyle=w.color||"#facc15";
+   if(sb.power){ctx.setLineDash([12*d,8*d]);ctx.lineDashOffset=-t*d;} else {ctx.setLineDash([]);}
+   ctx.shadowBlur=sb.power?9*d:0;ctx.shadowColor=w.color||"#facc15";
+   ctx.beginPath();ctx.moveTo((A.x+60)*d,(A.y+32)*d);ctx.lineTo((B.x+60)*d,(B.y+32)*d);ctx.stroke();
  });
- updateProbeReadout();
+ ctx.setLineDash([]);ctx.shadowBlur=0;updateProbeReadout();
 }
 function deleteSelected(){
  if(!sb.selected)return; const id=sb.selected; sb.nodes=sb.nodes.filter(n=>n.id!==id);sb.wires=sb.wires.filter(w=>!((w.a??w[0])===id||(w.b??w[1])===id));snapshotSandbox();document.querySelector(`[data-id="${id}"]`)?.remove();sb.selected=null;redraw();
@@ -767,6 +858,41 @@ function hasGroundPath(id){
  }
  return false;
 }
+
+function animateValueChange(n){
+ const el=document.querySelector(`[data-id="${n.id}"]`);
+ if(!el)return;
+ el.classList.remove("value-pulse");
+ void el.offsetWidth;
+ el.classList.add("value-pulse");
+ setTimeout(()=>el.classList.remove("value-pulse"),500);
+}
+function applyVisualState(){
+ const powered=runElectricalEngine();
+ for(const n of sb.nodes){
+   const el=document.querySelector(`[data-id="${n.id}"]`);
+   if(!el)continue;
+   const live=sb.power&&powered.has(n.id)&&hasGroundPath(n.id);
+   el.classList.toggle("energized",live);
+   el.classList.toggle("motor-running",n.type==="motor"&&live);
+   el.classList.toggle("relay-active",["relay","contactor"].includes(n.type)&&n.on);
+   el.classList.toggle("valve-open",n.type==="solenoid"&&live);
+   el.classList.toggle("plc-live",["plcIn","plcOut","ai","ao"].includes(n.type)&&live);
+ }
+ updateAnimatedWires(powered);
+}
+function updateAnimatedWires(powered){
+ const c=$("#canvas");if(!c)return;
+ c.classList.toggle("current-flow",sb.power);
+}
+function flashEvent(kind="ok"){
+ const s=$("#sbStatus");if(!s)return;
+ s.classList.remove("flash-ok","flash-bad");
+ void s.offsetWidth;
+ s.classList.add(kind==="bad"?"flash-bad":"flash-ok");
+ setTimeout(()=>s.classList.remove("flash-ok","flash-bad"),500);
+}
+
 function runElectricalEngine(){
  const p=poweredNodes();
  for(const n of sb.nodes){
@@ -778,7 +904,7 @@ function runElectricalEngine(){
 
 function simulate(reward=true){
  document.querySelectorAll(".component.lamp").forEach(e=>e.classList.remove("on")); const powered=runElectricalEngine();
- if(!sb.power){status("⏻ Цепь выключена. Включи питание кнопкой сверху.");updateProbeReadout();return;}
+ if(!sb.power){applyVisualState();status("⏻ Цепь выключена. Включи питание кнопкой сверху.");updateProbeReadout();return;}
  if(sb.fault==="open"){status(sb.mode==="novice"?"⚠ Обрыв цепи: ищи точку, после которой пропадает напряжение.":"⚠ Неисправность обнаружена.");return}
  if(sb.fault==="short"){status(sb.mode==="novice"?"⚠ Короткое замыкание: защита отключила цепь.":"⚠ Защита сработала.");sb.power=false;updatePowerUI();return}
  if(sb.fault==="bad_switch"){status(sb.mode==="novice"?"⚠ Неисправность кнопки: на входе 24 В, на выходе 0 В.":"⚠ Неисправность в цепи управления.");return}
@@ -792,12 +918,12 @@ function simulate(reward=true){
  }
  if(linked("source24","switch")&&linked("switch","lamp")&&linked("lamp","ground")&&allowedSwitch&&allowedBreaker){
    document.querySelectorAll(".component.lamp").forEach(e=>e.classList.add("on"));
-   status("✓ Цепь под напряжением. Лампа горит."); if(reward){state.xp+=5;save();} updateProbeReadout();return;
+   applyVisualState(); flashEvent("ok"); status("✓ Цепь под напряжением. Лампа горит."); if(reward){state.xp+=5;save();} updateProbeReadout();return;
  }
  if(linked("source24","sensor420")&&linked("sensor420","ai")&&linked("ai","ground")){
-   const s=sb.nodes.find(n=>n.type==="sensor420"); status(`✓ Токовая петля работает: ${(s?.signal??12).toFixed(2)} мА.`);if(reward){state.xp+=5;save();}updateProbeReadout();return;
+   const s=sb.nodes.find(n=>n.type==="sensor420"); applyVisualState(); flashEvent("ok"); status(`✓ Токовая петля работает: ${(s?.signal??12).toFixed(2)} мА.`);if(reward){state.xp+=5;save();}updateProbeReadout();return;
  }
- status(sb.mode==="novice"?"Цепь не работает. Проверь питание, состояние кнопок/автоматов и соединения.":"Цепь не работает."); updateProbeReadout();
+ applyVisualState(); flashEvent("bad"); status(sb.mode==="novice"?"Цепь не работает. Проверь питание, состояние кнопок/автоматов и соединения.":"Цепь не работает."); updateProbeReadout();
 }
 function injectFault(){
  sb.fault=["open","short","bad_switch"][Math.floor(Math.random()*3)];
@@ -841,8 +967,7 @@ function loadScheme(i){
    const y=60+Math.floor(idx/cols)*125;
    const n={
      id:sb.nextId++,type,x,y,scale:.9,on:false,
-     terminals:terminalList(type),lo:0,hi:100,value:50,
-     signal:["sensor420","pressure","temp","level","flow"].includes(type)?12:null
+     terminals:terminalList(type),...defaultComponentSettings(type)
    };
    sb.nodes.push(n);
    if(!idsByType[type])idsByType[type]=[];

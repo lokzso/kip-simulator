@@ -1,7 +1,7 @@
 {
   "name": "KIP & Electrician Simulator",
   "short_name": "KIP Simulator",
-  "start_url": "./?build=410",
+  "start_url": "./?build=420",
   "display": "standalone",
   "background_color": "#09101d",
   "theme_color": "#0b1020",

@@ -1,0 +1,10 @@
+INSTALL_IPHONE_NO_MAC.md
+README.md
+app.js
+icons/icon-192.png
+icons/icon-512.png
+index.html
+manifest.webmanifest
+style.css
+sw.js
+FILES_v4.2.txt

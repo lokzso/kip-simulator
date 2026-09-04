@@ -254,3 +254,40 @@ kbd{background:#1e293b;border:1px solid #475569;padding:2px 6px;border-radius:6p
 .tank span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;text-shadow:0 2px 6px #000}
 .process-controls{display:flex;flex-direction:column;gap:10px}
 @media(max-width:760px){.process-scene{align-items:flex-end}.tank{width:120px;height:220px}}
+
+/* v4.2 animations */
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pulseValue{0%{transform:scale(1)}45%{transform:scale(1.08);box-shadow:0 0 0 5px #38bdf844}100%{transform:scale(1)}}
+@keyframes glowLive{0%,100%{box-shadow:0 0 10px #22c55e33}50%{box-shadow:0 0 24px #22c55e99}}
+@keyframes motorSpin{to{transform:rotate(360deg)}}
+@keyframes relayClick{0%{transform:scale(1)}40%{transform:scale(.92)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes alarmBlink{0%,45%{filter:brightness(1)}50%,100%{filter:brightness(1.8);box-shadow:0 0 24px #ef4444}}
+@keyframes waveMove{from{transform:translateX(-25%)}to{transform:translateX(25%)}}
+@keyframes pumpSpin{to{transform:rotate(360deg)}}
+@keyframes statusOk{0%{box-shadow:0 0 0 0 #22c55e88}100%{box-shadow:0 0 0 18px #22c55e00}}
+@keyframes statusBad{0%{box-shadow:0 0 0 0 #ef444488}100%{box-shadow:0 0 0 18px #ef444400}}
+.page-enter{animation:pageIn .22s ease both}
+.menu-btn,.btn,.card{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.menu-btn:active,.btn:active{transform:scale(.97)}
+.value-pulse{animation:pulseValue .5s ease}
+.component.energized{animation:glowLive 1.2s ease-in-out infinite;border-color:#22c55e}
+.component.motor-running .devicon{display:inline-block;animation:motorSpin .75s linear infinite}
+.component.relay-active{animation:relayClick .25s ease}
+.component.valve-open .devicon{transform:rotate(90deg);transition:transform .3s ease}
+.component.plc-live::after{
+ content:"●";position:absolute;right:5px;top:4px;color:#22c55e;font-size:10px;text-shadow:0 0 8px #22c55e
+}
+.component.lamp.on{animation:glowLive .9s ease-in-out infinite;background:#3a3308!important}
+.flash-ok{animation:statusOk .45s ease}
+.flash-bad{animation:statusBad .45s ease}
+.process-rig{display:flex;align-items:center;gap:8px}
+.pump-visual,.valve-visual{display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:900}
+.pump-rotor{width:48px;height:48px;border-radius:50%;border:4px solid #64748b;display:flex;align-items:center;justify-content:center;font-size:24px}
+.pump-visual.running .pump-rotor{animation:pumpSpin .65s linear infinite;border-color:#22c55e;box-shadow:0 0 18px #22c55e66}
+.pipe{width:55px;height:12px;border-radius:9px;background:repeating-linear-gradient(90deg,#334155 0 12px,#475569 12px 20px)}
+.pipe.flowing{background:repeating-linear-gradient(90deg,#38bdf8 0 12px,#0ea5e9 12px 20px);background-size:40px 100%;animation:waveMove .8s linear infinite}
+.valve-visual{font-size:34px;transition:transform .3s ease}
+.valve-visual.open{transform:rotate(90deg);color:#22c55e}
+.liquid{overflow:hidden}
+.wave{position:absolute;top:-7px;left:-25%;width:150%;height:16px;border-radius:50%;background:#7dd3fc88;animation:waveMove 1.2s ease-in-out infinite alternate}
+.current-flow{filter:drop-shadow(0 0 5px #facc1566)}
