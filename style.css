@@ -1,0 +1,256 @@
+
+:root{
+  --bg:#09101d; --panel:#121b2c; --panel2:#1a263b; --text:#f8fafc;
+  --muted:#9ca3af; --accent:#facc15; --good:#22c55e; --bad:#ef4444;
+  --line:#334155; --blue:#38bdf8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;height:100%}
+body{overscroll-behavior:none}
+button,input,select{font:inherit}
+#app{min-height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.shell{max-width:1000px;margin:auto;padding:18px}
+.topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;background:linear-gradient(var(--bg) 75%,transparent);padding:8px 0 16px;z-index:20}
+.title{font-size:30px;font-weight:900;line-height:1.05}
+.sub{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card,.menu-btn,.panel{background:var(--panel);border:1px solid #23314a;border-radius:20px;box-shadow:0 10px 28px #0003}
+.menu-btn{padding:18px;text-align:left;color:var(--text);min-height:110px}
+.menu-btn b{display:block;font-size:18px;margin-top:8px}
+.menu-btn span{font-size:13px;color:var(--muted)}
+.icon{font-size:30px}
+.card{padding:16px;margin:10px 0}
+.card h3{margin:0 0 8px}
+.btn{border:0;border-radius:16px;padding:14px 16px;background:var(--panel2);color:var(--text);font-weight:700}
+.btn.primary{background:var(--accent);color:#111827}
+.btn.good{background:var(--good);color:#052e16}
+.btn.bad{background:var(--bad);color:white}
+.btn.wide{width:100%;margin:7px 0}
+.back{background:#202c42}
+.progress{height:12px;border-radius:99px;background:#202b3e;overflow:hidden}
+.progress>i{display:block;height:100%;background:var(--accent)}
+.section-title{font-size:24px;font-weight:900;margin:12px 0}
+.muted{color:var(--muted)}
+.tag{display:inline-block;padding:6px 10px;border-radius:99px;background:#1d2a40;color:#cbd5e1;margin:3px;font-size:12px}
+.answer{width:100%;text-align:left;margin:7px 0}
+.sep{height:1px;background:#27344c;margin:14px 0}
+.small{font-size:13px}
+.big-number{font-size:48px;font-weight:900;text-align:center;padding:20px;background:#04130b;border-radius:18px;color:#4ade80;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.toolbar{display:flex;gap:8px;overflow:auto;padding:8px 0}
+.tool{min-width:110px}
+.sandbox-wrap{height:67dvh;min-height:500px;border:1px solid #2c3c56;border-radius:20px;overflow:hidden;position:relative;background:
+ linear-gradient(#132036 1px, transparent 1px),
+ linear-gradient(90deg,#132036 1px, transparent 1px), #0b1424;
+ background-size:28px 28px}
+#canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.component{position:absolute;min-width:120px;min-height:64px;padding:10px 12px;background:#17233a;border:2px solid #405270;border-radius:14px;touch-action:none;user-select:none;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.component.selected{border-color:var(--accent);box-shadow:0 0 0 4px #facc1522}
+.component .name{font-weight:900;font-size:13px}
+.component .pins{font-size:10px;color:#94a3b8;margin-top:4px}
+.component.source{border-color:#22c55e}.component.ground{border-color:#64748b}
+.component.lamp.on{background:#332d06;box-shadow:0 0 30px #facc1580}
+.component.fault{border-color:var(--bad)}
+.sandbox-controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.status{margin-top:10px;padding:12px;border-radius:14px;background:#0f1a2b;border:1px solid #27364e}
+.scheme-list{display:grid;gap:10px}
+kbd{background:#1e293b;border:1px solid #475569;padding:2px 6px;border-radius:6px}
+.search{width:100%;padding:14px;border-radius:14px;border:1px solid #334155;background:#0f172a;color:white}
+.tabs{display:flex;gap:7px;overflow:auto;margin:8px 0 12px}
+.tab{white-space:nowrap}
+.exam-score{font-size:64px;font-weight:900;text-align:center}
+@media (min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}.sandbox-controls{grid-template-columns:repeat(4,1fr)}}
+
+.sandbox-stage{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:12px;align-items:stretch}
+.device-info{background:var(--panel);border:1px solid #2c3c56;border-radius:20px;padding:14px;min-height:180px;position:sticky;top:86px;align-self:start}
+.device-info-empty{color:var(--muted);display:flex;align-items:center;justify-content:center;min-height:150px;text-align:center}
+.device-info-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.device-info-icon{font-size:34px;width:52px;height:52px;border-radius:14px;background:#0d1728;display:flex;align-items:center;justify-content:center}
+.device-info-row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #25344c;padding:9px 0;font-size:12px}
+.device-info-row span{color:var(--muted)}
+.device-info-text{font-size:13px;line-height:1.35;margin-top:8px}
+.device-info-tip{margin-top:10px;padding:10px;border-radius:12px;background:#2b2508;color:#fde68a;font-size:12px}
+.devicon{font-size:24px;margin-bottom:4px}
+@media (max-width:760px){
+ .sandbox-stage{grid-template-columns:1fr}
+ .device-info{position:absolute;right:10px;bottom:10px;top:auto;width:min(250px,72%);z-index:8;max-height:42%;overflow:auto;background:#121b2cf5;backdrop-filter:blur(10px)}
+ .sandbox-wrap{height:67dvh}
+}
+
+/* v2.2 — compact inspector, categorized picker, pinch zoom */
+.device-info{padding:9px;width:210px;min-height:0}
+.device-info-head{gap:8px;margin-bottom:6px}
+.device-info-icon{font-size:24px;width:38px;height:38px;border-radius:10px}
+.device-info-head b{font-size:12px}
+.device-info-row{padding:5px 0;font-size:10px}
+.device-info-text{font-size:10px;line-height:1.25;margin-top:5px}
+.device-info-scale{font-size:10px;color:var(--accent);margin-top:5px}
+.component{transform-origin:center center}
+.device-picker{position:relative;margin-bottom:8px}
+.picker-panel{background:#0f1828;border:1px solid #30405a;border-radius:18px;padding:10px;margin-bottom:10px}
+.hidden{display:none!important}
+.picker-categories{display:flex;gap:6px;overflow:auto;padding:8px 0}
+.category{padding:8px 10px;font-size:11px;white-space:nowrap}
+.category.active{background:var(--accent);color:#111827}
+.device-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;max-height:310px;overflow:auto;padding:3px}
+.device-choice{border:1px solid #2c3d59;background:#162238;color:white;border-radius:13px;padding:9px 5px;min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.device-choice span{font-size:23px}.device-choice b{font-size:10px;margin-top:3px}.device-choice small{font-size:8px;color:#94a3b8;margin-top:2px}
+@media(max-width:760px){
+ .device-info{width:min(190px,58%);right:6px;bottom:6px;padding:7px;max-height:32%}
+ .device-info-icon{width:32px;height:32px;font-size:20px}
+ .device-info-row{font-size:9px}.device-info-text,.device-info-scale{font-size:9px}
+ .device-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-height:280px}
+ .picker-toggle{margin:3px 0}
+}
+
+/* v3.0 simulator upgrades */
+.sandbox-head{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:8px}
+.power-on{background:#22c55e!important;color:#052e16!important;box-shadow:0 0 18px #22c55e55}
+.power-off{background:#3b1620!important;color:#fecaca!important}
+.wire-toolbar{display:flex;align-items:center;gap:7px;overflow:auto;margin:7px 0}
+.wire-color{width:28px;height:28px;border-radius:50%;border:2px solid #64748b;flex:0 0 auto}
+.btn.mini{padding:7px 10px;min-width:38px}
+.terminal-row{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:5px}
+.terminal-dot{font-size:8px;background:#08111f;border:1px solid #64748b;border-radius:999px;padding:3px 5px;color:#cbd5e1}
+.active-device{box-shadow:0 0 0 3px #22c55e88,0 0 22px #22c55e44!important}
+.probe-readout{margin-top:9px;padding:10px 12px;border-radius:14px;background:#05151c;border:1px solid #155e75;color:#67e8f9;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+@media(max-width:760px){
+ .sandbox-head{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sandbox-head .btn{font-size:11px;padding:10px 8px}
+ .terminal-dot{font-size:7px;padding:2px 4px}
+}
+
+/* v3.1 — compact collapsible device info */
+.device-info{
+  position:absolute!important;
+  right:8px!important;
+  bottom:8px!important;
+  top:auto!important;
+  width:210px!important;
+  max-height:230px!important;
+  min-height:0!important;
+  padding:8px!important;
+  border-radius:16px!important;
+  overflow:hidden!important;
+  z-index:9!important;
+  background:#121b2cf2!important;
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 24px #0005;
+  transition:max-height .2s ease,width .2s ease,padding .2s ease;
+}
+.device-info.collapsed{
+  width:170px!important;
+  max-height:54px!important;
+  padding:6px 7px!important;
+}
+.device-info-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+}
+.device-info-mini{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:10px;
+  flex:1;
+}
+.device-info-mini>span:last-child{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+.device-info-mini b{
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:105px;
+  font-size:10px;
+}
+.device-info-mini small{
+  font-size:8px;
+  color:#facc15;
+}
+.mini-icon{
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#0c1627;
+  font-size:16px;
+}
+.info-toggle{
+  border:0;
+  border-radius:10px;
+  padding:6px 7px;
+  background:#25344d;
+  color:#fff;
+  font-size:9px;
+  font-weight:700;
+  flex:0 0 auto;
+}
+.device-info-details{
+  margin-top:7px;
+  overflow:auto;
+  max-height:170px;
+}
+.device-info.collapsed .device-info-details{
+  display:none;
+}
+.device-info-row{
+  padding:4px 0!important;
+  font-size:9px!important;
+}
+.device-info-text{
+  font-size:9px!important;
+  line-height:1.2!important;
+  margin-top:4px!important;
+}
+.device-info-tip{
+  margin-top:6px!important;
+  padding:6px!important;
+  font-size:8px!important;
+  border-radius:9px!important;
+}
+.device-info-empty{display:none!important}
+
+@media(max-width:760px){
+  .device-info{
+    right:6px!important;
+    bottom:6px!important;
+    width:190px!important;
+    max-height:205px!important;
+  }
+  .device-info.collapsed{
+    width:155px!important;
+    max-height:48px!important;
+  }
+  .device-info-mini b{max-width:92px;font-size:9px}
+  .mini-icon{width:24px;height:24px;flex-basis:24px;font-size:14px}
+  .info-toggle{font-size:8px;padding:5px 6px}
+  .device-info-details{max-height:145px}
+}
+
+/* v3.2 — fixed and expanded ready-made schemes */
+.scheme-card h3{margin-bottom:5px}
+.scheme-tags{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0}
+.scheme-tags .tag{font-size:9px;padding:4px 7px}
+@media(max-width:760px){
+ .scheme-card{padding:13px}
+ .scheme-card h3{font-size:16px}
+}
+
+/* v4.0 */
+.sandbox-world{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.view-controls{position:absolute;left:8px;bottom:8px;display:flex;gap:5px;z-index:7}
+.process-scene{display:flex;gap:18px;align-items:center;justify-content:center;padding:16px}
+.tank{width:150px;height:260px;border:5px solid #64748b;border-top-width:2px;border-radius:0 0 26px 26px;position:relative;overflow:hidden;background:#07101c}
+.liquid{position:absolute;left:0;right:0;bottom:0;background:#38bdf8aa;transition:height .35s}
+.tank span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;text-shadow:0 2px 6px #000}
+.process-controls{display:flex;flex-direction:column;gap:10px}
+@media(max-width:760px){.process-scene{align-items:flex-end}.tank{width:120px;height:220px}}
