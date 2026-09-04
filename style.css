@@ -291,3 +291,15 @@ kbd{background:#1e293b;border:1px solid #475569;padding:2px 6px;border-radius:6p
 .liquid{overflow:hidden}
 .wave{position:absolute;top:-7px;left:-25%;width:150%;height:16px;border-radius:50%;background:#7dd3fc88;animation:waveMove 1.2s ease-in-out infinite alternate}
 .current-flow{filter:drop-shadow(0 0 5px #facc1566)}
+
+/* v4.3 draggable inspector */
+#deviceInfoDragHandle{cursor:grab;touch-action:none;user-select:none}
+#deviceInfo.dragging #deviceInfoDragHandle{cursor:grabbing}
+.drag-grip{
+ width:18px;height:28px;display:flex;align-items:center;justify-content:center;
+ color:#94a3b8;font-size:14px;letter-spacing:-3px;flex:0 0 18px
+}
+#deviceInfo.dragging{opacity:.92;box-shadow:0 14px 32px #0008!important}
+@media(max-width:760px){
+ .device-info{max-width:210px}
+}

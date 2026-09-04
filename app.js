@@ -1,4 +1,4 @@
-const APP_VERSION="4.2.0";
+const APP_VERSION="4.3.0";
 
 const $ = s => document.querySelector(s);
 const app = document.getElementById('app');
@@ -120,6 +120,82 @@ meter:{icon:"📟",title:"Вольтметр",kind:"Измерение",spec:"V"
 ammeter:{icon:"🧪",title:"Амперметр",kind:"Измерение",spec:"A / mA",io:"COM / A",desc:"Измеряет ток цепи.",tip:"Подключается последовательно в разрыв цепи."},
 groundPE:{icon:"🟢",title:"PE",kind:"Защитное заземление",spec:"Protective Earth",io:"PE",desc:"Защитный проводник оборудования.",tip:"Не используй PE как рабочий 0V."}
 };
+
+
+const schemeExplain = {
+"Лампа через кнопку":{
+ how:"Источник +24 V подаёт питание на кнопку НО. Пока кнопка отпущена, цепь разомкнута. После включения кнопки ток проходит через лампу к 0V, и лампа загорается.",
+ check:"Проверь 24 V на входе кнопки, затем на её выходе после включения и напряжение непосредственно на лампе.",
+ faults:"Обрыв провода, неисправная кнопка, отсутствие 24 V, обрыв возврата 0V, неисправная лампа."
+},
+"Лампа через НЗ STOP":{
+ how:"НЗ-контакт в нормальном состоянии замкнут и пропускает ток. При нажатии STOP контакт размыкается и обесточивает лампу.",
+ check:"На исправном НЗ контакте в нормальном состоянии напряжение должно проходить дальше по цепи.",
+ faults:"Залипший контакт, обрыв провода, потеря питания, неправильное подключение NO вместо NC."
+},
+"Реле и лампа":{
+ how:"Кнопка питает катушку реле A1/A2. Когда катушка срабатывает, контакты реле меняют состояние. Через один из контактов можно включить лампу.",
+ check:"Сначала измерь напряжение на A1/A2. Затем проверь изменение состояния NO/NC контактов.",
+ faults:"Сгоревшая катушка, отсутствие 24 V, залипший контакт, обрыв цепи управления."
+},
+"Контактор и двигатель":{
+ how:"Цепь управления включает катушку контактора. Контактор замыкает силовые контакты, после чего двигатель получает питание. Тепловое реле защищает двигатель от перегрузки.",
+ check:"Проверь питание цепи управления, A1/A2 контактора, затем цепь после контактора и теплового реле.",
+ faults:"Сработал автомат, STOP разомкнут, катушка контактора неисправна, тепловое реле сработало, обрыв к двигателю."
+},
+"Токовая петля 4–20 мА":{
+ how:"Источник питает двухпроводный датчик. Датчик регулирует ток петли от 4 до 20 мА в зависимости от измеряемой величины. Аналоговый вход ПЛК измеряет этот ток.",
+ check:"Измерь питание датчика, затем ток в разрыв петли. 4 мА ≈ 0%, 12 мА ≈ 50%, 20 мА ≈ 100%.",
+ faults:"Обрыв петли, переполюсовка, отсутствие питания, неверный тип аналогового входа, неисправный датчик."
+},
+"0–10 В в ПЛК":{
+ how:"Датчик получает питание и формирует выходное напряжение 0–10 V. Аналоговый вход ПЛК измеряет напряжение относительно общего 0V.",
+ check:"Проверь питание датчика, общий 0V и напряжение OUT→0V.",
+ faults:"Нет общего 0V, обрыв выхода, неправильный диапазон AI, перегрузка выхода датчика."
+},
+"ПУСК/СТОП с самоподхватом":{
+ how:"Кнопка ПУСК кратковременно включает катушку контактора. После срабатывания вспомогательный NO контакт поддерживает питание катушки даже после отпускания ПУСК. Кнопка СТОП разрывает цепь и отключает контактор.",
+ check:"Проверь НЗ STOP, кнопку ПУСК, A1/A2 катушки и вспомогательный NO контакт самоподхвата.",
+ faults:"STOP разомкнут, не работает ПУСК, не замыкается вспомогательный контакт, катушка контактора неисправна."
+},
+"ПЛК → контактор → двигатель":{
+ how:"Дискретный выход ПЛК включает промежуточное реле или напрямую цепь катушки контактора. Контактор подаёт питание на двигатель.",
+ check:"Проверь состояние выхода ПЛК, напряжение на катушке реле/контактора и наличие питания после силовых контактов.",
+ faults:"Выход ПЛК не активен, нет общего COM, неисправно реле, катушка контактора оборвана, защита двигателя сработала."
+},
+"ПЛК → клапан":{
+ how:"Выход ПЛК подаёт управляющий сигнал на реле, которое включает соленоид клапана. При подаче питания клапан меняет положение.",
+ check:"Проверь PLC OUT, реле, напряжение на катушке клапана и механическое положение клапана.",
+ faults:"Нет сигнала ПЛК, неисправно реле, катушка клапана перегорела, клапан заклинил."
+},
+"Индуктивный датчик → ПЛК":{
+ how:"Индуктивный датчик питается от 24 V и меняет состояние выхода при появлении металлического объекта. Выход поступает на дискретный вход ПЛК.",
+ check:"Проверь питание +V/0V датчика и изменение напряжения на OUT при поднесении металла.",
+ faults:"Перепутан PNP/NPN, нет общего 0V, неверно подключён вход ПЛК, повреждён датчик."
+},
+"Датчик давления 4–20 мА":{
+ how:"Преобразователь давления измеряет давление и переводит его в ток 4–20 мА. Аналоговый вход ПЛК преобразует ток обратно в инженерные единицы.",
+ check:"Сравни давление процесса, рассчитанный ток и показания AI.",
+ faults:"Забита импульсная линия, обрыв токовой петли, неверный диапазон датчика, ошибка масштабирования AI."
+},
+"Измерение напряжения":{
+ how:"Вольтметр подключается параллельно двум точкам схемы и показывает разность потенциалов между ними.",
+ check:"Красный щуп — на точку выше потенциалом, COM — на опорную точку/0V.",
+ faults:"Неверный режим мультиметра, перепутаны щупы, плохой контакт, отсутствие питания."
+},
+"Измерение тока":{
+ how:"Амперметр включается последовательно, поэтому весь ток нагрузки проходит через измерительный прибор.",
+ check:"Разорви цепь и включи прибор в разрыв. Выбери правильный вход A/mA и диапазон.",
+ faults:"Подключение амперметра параллельно, неправильный вход щупа, перегоревший предохранитель мультиметра."
+}
+};
+function getSchemeExplanation(name){
+ return schemeExplain[name]||{
+  how:"Эта готовая схема показывает типовое соединение перечисленных приборов. Проследи путь от источника питания через управление и защиту к нагрузке или входу ПЛК.",
+  check:"Проверяй цепь последовательно: источник → защита → управляющие элементы → исполнительный элемент/вход → возврат.",
+  faults:"Типовые причины: отсутствие питания, обрыв провода, неправильное состояние NO/NC, неисправный прибор или неверное подключение."
+ };
+}
 
 const schemes = [
 ["Лампа через кнопку",["source24","switch","lamp","ground"],[["source24","switch"],["switch","lamp"],["lamp","ground"]],"Простейшая цепь управления лампой кнопкой НО."],
@@ -425,7 +501,8 @@ function sandboxPage(){
    <div class="sandbox-wrap" id="sandbox"><div id="world" class="sandbox-world"><canvas id="canvas"></canvas></div>
    <div class="view-controls"><button class="btn mini" onclick="zoomWorld(-.1)">−</button><button class="btn mini" onclick="resetWorldView()">100%</button><button class="btn mini" onclick="zoomWorld(.1)">＋</button></div></div>
    <aside id="deviceInfo" class="device-info collapsed">
-   <div class="device-info-top">
+   <div class="device-info-top" id="deviceInfoDragHandle">
+     <div class="drag-grip">⋮⋮</div>
      <div id="deviceInfoMini" class="device-info-mini">Выбери прибор</div>
      <button id="deviceInfoToggle" class="info-toggle" onclick="toggleDeviceInfo()">Показать</button>
    </div>
@@ -437,6 +514,7 @@ function sandboxPage(){
    <button class="btn" onclick="deleteSelected()">Удалить</button>
    <button class="btn" onclick="toggleSelectedDevice()">Переключить прибор</button>
    <button class="btn" onclick="openSelectedSettings()">Настроить</button>
+   <button class="btn" onclick="resetDeviceInfoPosition()">↗ Карточка</button>
    <button class="btn primary" onclick="simulate()">Проверить цепь</button>
    <button class="btn bad" onclick="injectFault()">Неисправность</button>
    <button class="btn" onclick="startProbe('A')">🔴 Щуп V+</button>
@@ -444,7 +522,7 @@ function sandboxPage(){
  </div>
  <div class="status" id="sbStatus">Цепь обесточена. Добавляй элементы и соединяй их по клеммам.</div>
  <div id="probeReadout" class="probe-readout">Мультиметр: щупы не установлены</div>`);
- fitCanvas(); redraw(); renderDevicePicker(""); updatePowerUI(); installWorldPanZoom(); applyWorldView(); startSandboxAnimations();
+ fitCanvas(); redraw(); renderDevicePicker(""); updatePowerUI(); installWorldPanZoom(); applyWorldView(); startSandboxAnimations(); installDeviceInfoDrag();
 }
 
 const deviceCategoryMap = {
@@ -772,6 +850,43 @@ function showDeviceInfo(type,node=null){
    <div class="device-info-text">${i.desc}</div>
    <div class="device-info-tip">💡 ${i.tip}</div>`;
 }
+
+function installDeviceInfoDrag(){
+ const box=$("#deviceInfo"),handle=$("#deviceInfoDragHandle"); if(!box||!handle)return;
+ const saved=JSON.parse(localStorage.getItem("kip-device-info-pos")||"null");
+ if(saved&&Number.isFinite(saved.x)&&Number.isFinite(saved.y)){
+   box.style.left=saved.x+"px";box.style.top=saved.y+"px";box.style.right="auto";box.style.bottom="auto";
+ }
+ let active=false,pid=null,sx=0,sy=0,bx=0,by=0;
+ handle.addEventListener("pointerdown",e=>{
+   if(e.target.closest("button"))return;
+   active=true;pid=e.pointerId;handle.setPointerCapture?.(pid);
+   const r=box.getBoundingClientRect(),parent=box.offsetParent?.getBoundingClientRect()||{left:0,top:0};
+   sx=e.clientX;sy=e.clientY;bx=r.left-parent.left;by=r.top-parent.top;
+   box.classList.add("dragging");
+ });
+ handle.addEventListener("pointermove",e=>{
+   if(!active||e.pointerId!==pid)return;
+   const parent=box.offsetParent; if(!parent)return;
+   const maxX=Math.max(0,parent.clientWidth-box.offsetWidth);
+   const maxY=Math.max(0,parent.clientHeight-box.offsetHeight);
+   const x=Math.max(0,Math.min(maxX,bx+e.clientX-sx));
+   const y=Math.max(0,Math.min(maxY,by+e.clientY-sy));
+   box.style.left=x+"px";box.style.top=y+"px";box.style.right="auto";box.style.bottom="auto";
+ });
+ const end=e=>{
+   if(!active||e.pointerId!==pid)return;
+   active=false;box.classList.remove("dragging");
+   localStorage.setItem("kip-device-info-pos",JSON.stringify({x:parseFloat(box.style.left)||0,y:parseFloat(box.style.top)||0}));
+ };
+ handle.addEventListener("pointerup",end);handle.addEventListener("pointercancel",end);
+}
+function resetDeviceInfoPosition(){
+ localStorage.removeItem("kip-device-info-pos");
+ const box=$("#deviceInfo");if(!box)return;
+ box.style.left="";box.style.top="";box.style.right="8px";box.style.bottom="8px";
+}
+
 function toggleDeviceInfo(){
  const box=$("#deviceInfo"), btn=$("#deviceInfoToggle"); if(!box||!btn)return;
  const collapsed=box.classList.toggle("collapsed");
@@ -941,9 +1056,23 @@ function schemesPage(){
    <div class="muted small">${s[3]||""}</div>
    <div class="scheme-tags">${s[1].map(x=>`<span class="tag">${componentInfo[x]?.icon||"🔧"} ${cat(x)?.[1]||x}</span>`).join("")}</div>
    <button class="btn primary wide" onclick="loadScheme(${i})">Открыть в песочнице</button>
+   <button class="btn wide" onclick="schemeInfo(${i})">Как работает схема</button>
  </div>`).join("")}
  </div>`);
 }
+
+function schemeInfo(i){
+ const s=schemes[i]; if(!s)return;
+ const e=getSchemeExplanation(s[0]);
+ shell(s[0],`
+ <div class="card"><h3>Как работает</h3><p>${e.how}</p></div>
+ <div class="card"><h3>Что проверять</h3><p>${e.check}</p></div>
+ <div class="card"><h3>Типичные неисправности</h3><p>${e.faults}</p></div>
+ <div class="card"><h3>Состав схемы</h3><div class="scheme-tags">${s[1].map(x=>`<span class="tag">${componentInfo[x]?.icon||"🔧"} ${cat(x)?.[1]||x}</span>`).join("")}</div></div>
+ <button class="btn primary wide" onclick="loadScheme(${i})">Открыть и попробовать</button>
+ <button class="btn wide" onclick="schemesPage()">← К списку схем</button>`);
+}
+
 function filterSchemes(q){
  q=(q||"").toLowerCase().trim();
  document.querySelectorAll(".scheme-card").forEach(el=>el.style.display=!q||el.dataset.search.includes(q)?"":"none");

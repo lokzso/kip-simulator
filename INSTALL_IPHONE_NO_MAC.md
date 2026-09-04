@@ -1,19 +1,6 @@
-# Установка/обновление v4.2
+# Обновление до v4.3
 
-## GitHub Pages
-Загрузи содержимое этой папки прямо в корень репозитория.
+Загрузи содержимое этой папки прямо в корень GitHub-репозитория и замени старые файлы.
+Дождись успешного GitHub Pages deployment.
 
-В корне должны быть:
-- index.html
-- app.js
-- style.css
-- manifest.webmanifest
-- sw.js
-- README.md
-- INSTALL_IPHONE_NO_MAC.md
-- icons/
-
-После загрузки дождись успешного GitHub Pages deployment.
-
-## iPhone
-Открой сайт в Safari. v4.2 использует versioned URL для app.js/style.css/manifest и не держит постоянный offline cache.
+v4.3 использует versioned app.js/style.css/manifest и не держит постоянный offline-cache.
